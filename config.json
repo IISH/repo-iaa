@@ -1,0 +1,46 @@
+{
+  "web": {
+    "accesstoken": "accesstoken",
+    "endpoint": "http://localhost:3000",
+    "session_secret": "session_secret"
+  },
+  "openid": {
+    "client_params": {
+      "client_id": "session_secret",
+      "client_secret": "client_secret",
+      "token_endpoint_auth_method": "client_secret_basic"
+    },
+    "oidc_discover_url": "http://localhost",
+    "keystore_conf": {
+      "kty": "RSA",
+      "e": "AQAB",
+      "kid": "rsa_key",
+      "alg": "RS256"
+    },
+    "keystore": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "kid": "rsa_key",
+          "alg": "RS256",
+          "e": "AQAB",
+          "n": "n",
+          "d": "d-d",
+          "p": "p-p",
+          "q": "q",
+          "dp": "dp",
+          "dq": "dq",
+          "qi": "qi"
+        }
+      ]
+    },
+    "strategy": {
+      "redirect_uri": "http://127.0.0.1:3000/openid-connect-login",
+      "scope": "openid email",
+      "response": [
+        "code"
+      ]
+    },
+    "users": {}
+  }
+}
