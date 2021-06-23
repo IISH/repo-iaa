@@ -34,14 +34,24 @@ router.get('/', function (req, res) {
 // bij de tree maken we een volledige diepte van folders - niet de files.
 router.get('/tree', function (req, res) {
     let folder = nconf.get('vfs') + '/' + req.user.sub;
-    res.status(200);
-    res.end(JSON.stringify(dirTree(folder + '/dip', '/dip')));
+    if (fs.existsSync(folder)) {
+        res.status(200);
+        res.end(JSON.stringify(dirTree(folder + '/dip', '/dip')));
+    } else {
+        res.end(JSON.stringify("Unknown user or not authorized"));
+        res.status(403);
+    }
 });
 
 router.get('/tree/:accession', function (req, res) {
     let folder = nconf.get('vfs') + '/' + req.user.sub;
-    res.status(200);
-    res.end(JSON.stringify(dirTree(folder + '/dip', '/dip', req.accession)));
+    if (fs.existsSync(folder)) {
+        res.status(200);
+        res.end(JSON.stringify(dirTree(folder + '/dip', '/dip', req.accession)));
+    } else {
+        res.end(JSON.stringify("Unknown user or not authorized"));
+        res.status(403);
+    }
 });
 
 // alternatief is https://www.npmjs.com/package/directory-tree
