@@ -38,6 +38,7 @@ router.get('/tree', function (req, res) {
         res.status(200);
         res.end(JSON.stringify(dirTree(folder + '/dip', '/dip')));
     } else {
+        console.info("Not found " + folder);
         res.end(JSON.stringify("Unknown user or not authorized"));
         res.status(403);
     }
@@ -49,6 +50,7 @@ router.get('/tree/:accession', function (req, res) {
         res.status(200);
         res.end(JSON.stringify(dirTree(folder + '/dip', '/dip', req.accession)));
     } else {
+        console.info("Not found " + folder);
         res.end(JSON.stringify("Unknown user or not authorized"));
         res.status(403);
     }
@@ -89,7 +91,7 @@ function readVFS(filename) {
     // https://www.npmjs.com/package/xml2js
     let vfs_file = null;
     let parser = new xml2js.Parser();
-    const data = fs.readFileSync(filename, {encoding: 'utf8', flag: 'r'});
+    let data = fs.readFileSync(filename, {encoding: 'utf8', flag: 'r'});
     parser.parseString(data, function (err, result) {
         if (err) {
             console.dir(err);
