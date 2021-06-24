@@ -64,6 +64,7 @@ router.head('/:na/:id', function (req, res) {
     let conditions = {$or: [{objid: hdl}, {aip: {$elemMatch: {hdl: hdl}}}, {dip: {$elemMatch: {hdl: hdl}}}]};
     VFS.findOne(conditions, {}, {}, function (err, doc) {
         if (err) {
+            console.error(err);
             res.status(500);
             res.headers.set('ServerError', err);
             res.send();
@@ -97,6 +98,7 @@ router.get('/file/:na/:id', function (req, res, next) {
     let conditions = {$or: [{objid: hdl}, {aip: {$elemMatch: {hdl: hdl}}}, {dip: {$elemMatch: {hdl: hdl}}}]};
     VFS.findOne(conditions, {}, {}, function (err, doc) {
         if (err) {
+            console.error(err);
             res.status(500);
             res.headers.set('ServerError', err);
             res.send();
@@ -121,13 +123,13 @@ router.get('/file/:na/:id', function (req, res, next) {
 
                 res.sendFile(file, options, function (err, result) {
                     if (err) {
+                        console.error(err);
                         next(err);
                     } else {
                         console.log("File served " + hdl + '->' + file);
                     }
                 });
             } else {
-                res.headers.set('ServerError', "Not found " + hdl);
                 res.status(404).send();
             }
         }
@@ -142,6 +144,7 @@ router.get('/metadata/:na/:id', function (req, res) {
     let conditions = {$or: [{objid: hdl}, {aip: {$elemMatch: {hdl: hdl}}}, {dip: {$elemMatch: {hdl: hdl}}}]}; // look for id number of file handle.
     VFS.findOne(conditions, {}, {}, function (err, doc) {
         if (err) {
+            console.error(err);
             res.status(500);
             res.end(JSON.stringify({status: 500, message: err}));
         } else {
@@ -248,6 +251,7 @@ router.post('/:_package/:na/:id', function (req, res) {
     if (['aip', 'dip'].includes(_package)) {
         VFS.findOneAndUpdate(conditions, update, {upsert: true}, function (err, result) {
             if (err) {
+                console.error(err);
                 res.status(500);
                 res.end(JSON.stringify({status: 500, message: err}));
             } else {
