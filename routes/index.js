@@ -76,7 +76,7 @@ router.head('/:na/:id', function (req, res) {
                     return file.hdl === hdl;
                 })[0];
                 let name = metadata.name;
-                let content_type = metadata.contenttype;
+                let content_type = metadata.content_type;
                 let content_length = metadata.length;
                 res.attachment = name;
                 res.contentType(content_type);
@@ -109,10 +109,10 @@ router.get('/file/:na/:id', function (req, res, next) {
                 let metadata = files.filter(function (file) {
                     return file.hdl === hdl;
                 })[0];
-                let file = metadata.path; // # todo, make this the virtual path
+                let file = metadata.vpath; // # todo, make this the virtual path
                 let name = metadata.name;
-                let content_length = metadata.content_length;
-                let content_type = metadata.contenttype;
+                let content_length = metadata.length;
+                let content_type = metadata.content_type;
 
                 let options = {
                     headers: {
@@ -164,8 +164,8 @@ router.get('/metadata/:na/:id', function (req, res) {
                         delete o.__v;
                         o.type = 'dip';
                         return o;
-                    }
-                });
+                    } else return null;
+                }).filter(function(o){ return (o !== null) });
                 delete tmp._id;
                 delete tmp.aip;
                 delete tmp.dip;

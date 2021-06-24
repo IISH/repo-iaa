@@ -24,7 +24,7 @@ let filesSchema = new dao.Schema({
     vpath: String,
     hdl: {type: String, index: {unique: true, dropDups: true}},
     length: Number,
-    contenttype: String
+    content_type: String
 });
 
 let vfsSchema = new dao.Schema({
