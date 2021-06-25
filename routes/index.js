@@ -2,47 +2,111 @@
  * index
  *
  * Description
- * Serve the home page
+ * Serve the resources: bytestream and metadata
  *
- * @type {createApplication}
+ * @type {Router}
  */
 
 const nconf = require('nconf');
 const express = require('express');
-// const dirTree = require("directory-tree");
-const router = express.Router({});
 const fs = require('fs');
 const path = require('path');
+const router = express.Router({});
+const VFS = require('../model/vfs');
 const xml2js = require('xml2js');
 
-const VFS = require('../model/vfs');
+const cache = {};
 
-router.param('na', function (req, res, next, na) {
-    req.na = na;
-    next();
+// interceptor
+router.all('*/*', function (req, res, next) {
+    let folder = nconf.get('vfs') + '/' + (req.user.sub || 'dummy');
+    if (fs.existsSync(folder)) {
+        let tree = cache[req.user.sub];
+        let expire = new Date().valueOf();
+        if (tree && tree['expire'] < expire) {
+            tree = null;
+        }
+        if (!tree) {
+            let vpath = [];
+            tree = dirTree(folder + '/dip', '/dip', vpath);
+            tree['expire'] = expire + 60000; // expire after one minute.
+            tree['folder'] = folder;
+            tree['vpath'] = vpath;
+            cache[req.user.sub] = tree;
+        }
+        next();
+    } else {
+        console.info("Not found " + folder);
+        res.end(JSON.stringify("User not recognized"));
+        res.status(401);
+    }
 });
+
 router.param('_package', function (req, res, next, _package) {
     req._package = _package;
     next();
 });
-router.param('id', function (req, res, next, id) {
-    req.id = id;
+router.param('na', function (req, res, next, na) {
+    req.na = na;
     next();
 });
+router.param('id', function (req, res, next, id) {
+    req.id = id;
+    let hdl = req.na + '/' + id;
+    req.hdl = hdl;
 
-router.all('*/*', function (req, res, next) {
-    let folder = nconf.get('vfs') + '/' + (req.user.sub || 'dummy');
-    if (fs.existsSync(folder)) {
-        req.folder = folder;
+    if (['aip', 'dip'].includes(req._package)) {
         next();
     } else {
-        console.info("Not found " + folder);
-        res.end(JSON.stringify("Unknown user or not authorized"));
-        res.status(403);
+        // Bestaat dit object?
+        let conditions = {$or: [{objid: hdl}, {aip: {$elemMatch: {hdl: hdl}}}, {dip: {$elemMatch: {hdl: hdl}}}]};
+        VFS.findOne(conditions, {}, {}, function (err, _doc) {
+            if (err) {
+                console.error(err);
+                res.status(500);
+                res.send();
+            } else {
+                if (_doc) {
+                    let doc = _doc.toJSON();
+                    req.doc = doc;
+                    // mag de gebruiker het zien?
+                    let files = doc.aip.concat(doc.dip).map(function (o) {
+                        return path.dirname(o.vpath) + '/'; // because the vpath all end with a -/
+                    });
+                    let tree = cache[req.user.sub];
+                    let authorized = tree.vpath.find(function (vpath) {
+                        return files.includes(vpath);
+                    });
+                    if (authorized) {
+                        let files = doc.aip.concat(doc.dip);
+                        let file = files.find(function (file) {
+                            return file.hdl === hdl;
+                        });
+                        let vpath = file.vpath;
+                        let filename = path.basename(vpath);
+                        let content_type = file.content_type;
+                        let content_length = file.length;
+                        req.download = {
+                            hdl: hdl,
+                            filename: filename,
+                            vpath: vpath,
+                            content_type: content_type,
+                            content_length: content_length
+                        }
+                        next();
+                    } else {
+                        res.status(403).send();
+                    }
+
+                } else {
+                    res.status(404).send();
+                }
+            }
+        })
     }
 });
 
-// Human index page
+// Human index page for login/logout
 router.get('/', function (req, res) {
     res.render('index', {title: 'a title', user: req.user.fullname});
 });
@@ -50,143 +114,80 @@ router.get('/', function (req, res) {
 // verkrijg een tree overzicht - folders en files - van de gebruiker.
 // bij de tree maken we een volledige diepte van folders - niet de files.
 router.get('/tree', function (req, res) {
-    let folder = req.folder;
     res.status(200);
-    res.end(JSON.stringify(dirTree(folder + '/dip', '/dip')));
+    let tree = JSON.parse(JSON.stringify(cache[req.user.sub])); // clone
+    delete tree.expire;
+    delete tree.vpath;
+    delete tree.folder;
+    res.end(JSON.stringify(tree));
 });
 
 router.head('/:na/:id', function (req, res) {
-
-    let folder = req.folder;
-    let tree = dirTree(folder + '/dip', '/dip'); // todo: cache dit voor 1 minuut. Gebruik tree voor authorizatie besluit.
-
-    let hdl = req.na + '/' + req.id;
-    let conditions = {$or: [{objid: hdl}, {aip: {$elemMatch: {hdl: hdl}}}, {dip: {$elemMatch: {hdl: hdl}}}]};
-    VFS.findOne(conditions, {}, {}, function (err, doc) {
-        if (err) {
-            console.error(err);
-            res.status(500);
-            res.headers.set('ServerError', err);
-            res.send();
-        } else {
-            if (doc) {
-                let tmp = doc.toJSON();
-                let files = tmp.aip.concat(tmp.dip);
-                let metadata = files.filter(function (file) {
-                    return file.hdl === hdl;
-                })[0];
-                let name = metadata.name;
-                let content_type = metadata.content_type;
-                let content_length = metadata.length;
-                res.attachment = name;
-                res.contentType(content_type);
-                res.setHeader('Content-Length', content_length);
-                res.status(200).send();
-            } else {
-                res.headers.set('ServerError', "Not found " + hdl);
-                res.status(404).send();
-            }
-        }
-    });
+    let download = req.download;
+    res.contentType(download.content_type);
+    res.setHeader('Content-Length', download.content_length);
+    res.setHeader('Content-Disposition', 'attachment; filename="' + download.filename + '"');
+    res.status(200).send();
 });
 
-router.get('/file/:na/:id', function (req, res, next) {
-    let folder = req.folder;
-    let tree = dirTree(folder + '/dip', '/dip'); // todo: cache dit voor 1 minuut. Gebruik tree voor authorizatie besluit.
+router.get('/:na/:id', function (req, res, next) {
 
-    let hdl = req.na + '/' + req.id;
-    let conditions = {$or: [{objid: hdl}, {aip: {$elemMatch: {hdl: hdl}}}, {dip: {$elemMatch: {hdl: hdl}}}]};
-    VFS.findOne(conditions, {}, {}, function (err, doc) {
+    let download = req.download;
+
+    let options = {
+        headers: {
+            'Content-Length': download.content_length,
+            'Content-Type': download.content_type,
+            'Content-Disposition': 'attachment; filename="' + download.filename + '"'
+        }
+    }
+
+    res.sendFile(download.vpath, options, function (err, result) {
         if (err) {
             console.error(err);
-            res.status(500);
-            res.headers.set('ServerError', err);
-            res.send();
+            next(err);
         } else {
-            if (doc) {
-                let tmp = doc.toJSON();
-                let files = tmp.aip.concat(tmp.dip);
-                let metadata = files.filter(function (file) {
-                    return file.hdl === hdl;
-                })[0];
-                let file = metadata.vpath; // # todo, make this the virtual path
-                let name = metadata.name;
-                let content_length = metadata.length;
-                let content_type = metadata.content_type;
-
-                let options = {
-                    headers: {
-                        'Content-Length': content_length,
-                        'Content-Type': content_type
-                    }
-                }
-
-                res.sendFile(file, options, function (err, result) {
-                    if (err) {
-                        console.error(err);
-                        next(err);
-                    } else {
-                        console.log("File served " + hdl + '->' + file);
-                    }
-                });
-            } else {
-                res.status(404).send();
-            }
+            console.log(result + " file served " + download.hdl + " -> " + download.vpath);
         }
     });
 });
 
 router.get('/metadata/:na/:id', function (req, res) {
-    let folder = req.folder;
-    let tree = dirTree(folder + '/dip', '/dip'); // todo: cache dit voor 1 minuut. Gebruik tree voor authorizatie besluit.
-
-    let hdl = req.na + '/' + req.id;
-    let conditions = {$or: [{objid: hdl}, {aip: {$elemMatch: {hdl: hdl}}}, {dip: {$elemMatch: {hdl: hdl}}}]}; // look for id number of file handle.
-    VFS.findOne(conditions, {}, {}, function (err, doc) {
-        if (err) {
-            console.error(err);
-            res.status(500);
-            res.end(JSON.stringify({status: 500, message: err}));
-        } else {
-            if (doc) {
-                let tmp = doc.toJSON();
-                let aip = (hdl === doc.objid) ? tmp.aip.map(function (o) {
-                    delete o._id;
-                    delete o.path;
-                    delete o.__v;
-                    o.type = 'aip';
-                    return o;
-                }) : [];
-                let dip = tmp.dip.map(function (o) {
-                    if (hdl === doc.objid || hdl === o.hdl) {
-                        delete o._id;
-                        delete o.path;
-                        delete o.__v;
-                        o.type = 'dip';
-                        return o;
-                    } else return null;
-                }).filter(function(o){ return (o !== null) });
-                delete tmp._id;
-                delete tmp.aip;
-                delete tmp.dip;
-                delete tmp.__v;
-
-                tmp.files = aip.concat(dip);
-                res.status(200);
-                res.end(JSON.stringify(tmp));
-                // toda: wijzig absolute vpath in relatief voor de vfs van de gebruiker.
-                res.status(200);
-                res.end(JSON.stringify(tmp));
-            } else {
-                res.status(404);
-                res.end(JSON.stringify({status: 404, message: "Unknown " + hdl}));
-            }
-        }
+    let hdl = req.hdl;
+    let doc = req.doc;
+    let aip = (hdl === doc.objid) ? doc.aip.map(function (o) {
+        delete o._id;
+        delete o.path;
+        delete o.__v;
+        o.type = 'aip';
+        return o;
+    }) : [];
+    let dip = doc.dip.map(function (o) {
+        if (hdl === doc.objid || hdl === o.hdl) {
+            delete o._id;
+            delete o.path;
+            delete o.__v;
+            o.type = 'dip';
+            return o;
+        } else return null;
+    }).filter(function (o) {
+        return (o !== null)
     });
+    delete doc._id;
+    delete doc.aip;
+    delete doc.dip;
+    delete doc.__v;
+
+    doc.files = aip.concat(dip);
+    res.status(200);
+    res.end(JSON.stringify(doc));
+    // toda: wijzig absolute vpath in relatief voor de vfs van de gebruiker.
+    res.status(200);
+    res.end(JSON.stringify(doc));
 });
 
 // alternatief is https://www.npmjs.com/package/directory-tree
-function dirTree(filename, vfs) {
+function dirTree(filename, vfs, vpath) {
     let stats = fs.lstatSync(filename);
     let info = {
         path: vfs,
@@ -195,20 +196,21 @@ function dirTree(filename, vfs) {
 
     if (stats.isDirectory()) {
         info.children = fs.readdirSync(filename).map(function (child) {
-            return dirTree(filename + '/' + child, vfs + '/' + child);
+            return dirTree(filename + '/' + child, vfs + '/' + child, vpath);
         });
     } else {
         let _filename = readVFS(filename);
         if (_filename) {
+            vpath.push(_filename);
             let children = fs.readdirSync(_filename).map(function (child) { // dit zijn de dip folders
                 let na = _filename.split('/')[3]; // na is altijd op /folder/folder/na
-
                 let name = path.basename(child);
                 let accession_path = vfs + '/' + child;
+                let hdl = na + '/' + name;
                 return {
                     path: accession_path,
                     name: name,
-                    hdl: na + '/' + name,
+                    hdl: hdl,
                     type: 'id'
                 };
             });
@@ -242,8 +244,8 @@ function readVFS(filename) {
 }
 
 router.post('/:_package/:na/:id', function (req, res) {
-    let objid = req.na + '/' + req.id;
-    let conditions = {objid: objid};
+    let hdl = req.hdl;
+    let conditions = {objid: hdl};
     let update = {};
     let _package = req._package;
     update[_package] = req.body.files;

@@ -53,3 +53,5 @@ Thumbs.db
 
 # Test material
 *.md5
+
+sessions/
