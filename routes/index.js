@@ -19,6 +19,9 @@ const cache = {};
 
 // interceptor
 router.all('*/*', function (req, res, next) {
+
+    res.type( 'application/json');
+
     let folder = nconf.get('vfs') + '/' + (req.user.sub || 'dummy');
     if (fs.existsSync(folder)) {
         let tree = cache[req.user.sub];
@@ -27,11 +30,11 @@ router.all('*/*', function (req, res, next) {
             tree = null;
         }
         if (!tree) {
-            let vpath = [];
-            tree = dirTree(folder + '/dip', '/dip', vpath);
+            let objid = [];
+            tree = dirTree(folder + '/dip', '/dip', objid);
             tree['expire'] = expire + 60000; // expire after one minute.
             tree['folder'] = folder;
-            tree['vpath'] = vpath;
+            tree['objid'] = objid;
             cache[req.user.sub] = tree;
         }
         next();
@@ -70,13 +73,8 @@ router.param('id', function (req, res, next, id) {
                     let doc = _doc.toJSON();
                     req.doc = doc;
                     // mag de gebruiker het zien?
-                    let files = doc.aip.concat(doc.dip).map(function (o) {
-                        return path.dirname(o.vpath) + '/'; // because the vpath all end with a -/
-                    });
                     let tree = cache[req.user.sub];
-                    let authorized = tree.vpath.find(function (vpath) {
-                        return files.includes(vpath);
-                    });
+                    let authorized = tree.objid.includes(doc.objid);
                     if (authorized) {
                         let files = doc.aip.concat(doc.dip);
                         let file = files.find(function (file) {
@@ -95,10 +93,12 @@ router.param('id', function (req, res, next, id) {
                         }
                         next();
                     } else {
+                        res.end(JSON.stringify({status: 403, message: 'Not authorized for ' + identifier + ' ' + err}));
                         res.status(403).send();
                     }
 
                 } else {
+                    res.end(JSON.stringify({status: 404, message: 'handle not found ' + identifier + ' ' + err}));
                     res.status(404).send();
                 }
             }
@@ -108,17 +108,17 @@ router.param('id', function (req, res, next, id) {
 
 // Human index page for login/logout
 router.get('/', function (req, res) {
+    res.type( 'application/json')
     res.render('index', {title: 'a title', user: req.user.fullname});
 });
 
 // verkrijg een tree overzicht - folders en files - van de gebruiker.
 // bij de tree maken we een volledige diepte van folders - niet de files.
 router.get('/tree', function (req, res) {
-    res.status(200);
     let tree = JSON.parse(JSON.stringify(cache[req.user.sub])); // clone
     delete tree.expire;
-    delete tree.vpath;
     delete tree.folder;
+    res.status(200);
     res.end(JSON.stringify(tree));
 });
 
@@ -137,10 +137,13 @@ router.get('/:na/:id', function (req, res, next) {
     let options = {
         headers: {
             'Content-Length': download.content_length,
-            'Content-Type': download.content_type,
-            'Content-Disposition': 'attachment; filename="' + download.filename + '"'
+            'Content-Type': download.content_type
         }
     }
+
+    // if (download.content_type === 'application/octet-stream') {
+    //     options.headers['Content-Disposition'] = 'attachment; filename="' + download.filename + '"';
+    // }
 
     res.sendFile(download.vpath, options, function (err, result) {
         if (err) {
@@ -181,13 +184,10 @@ router.get('/metadata/:na/:id', function (req, res) {
     doc.files = aip.concat(dip);
     res.status(200);
     res.end(JSON.stringify(doc));
-    // toda: wijzig absolute vpath in relatief voor de vfs van de gebruiker.
-    res.status(200);
-    res.end(JSON.stringify(doc));
 });
 
 // alternatief is https://www.npmjs.com/package/directory-tree
-function dirTree(filename, vfs, vpath) {
+function dirTree(filename, vfs, objid) {
     let stats = fs.lstatSync(filename);
     let info = {
         path: vfs,
@@ -196,21 +196,21 @@ function dirTree(filename, vfs, vpath) {
 
     if (stats.isDirectory()) {
         info.children = fs.readdirSync(filename).map(function (child) {
-            return dirTree(filename + '/' + child, vfs + '/' + child, vpath);
+            return dirTree(filename + '/' + child, vfs + '/' + child, objid);
         });
     } else {
         let _filename = readVFS(filename);
         if (_filename) {
-            vpath.push(_filename);
             let children = fs.readdirSync(_filename).map(function (child) { // dit zijn de dip folders
-                let na = _filename.split('/')[3]; // na is altijd op /folder/folder/na
+                let na = _filename.split('/')[3]; // na is altijd op /folder1/folder2/na
                 let name = path.basename(child);
                 let accession_path = vfs + '/' + child;
                 let hdl = na + '/' + name;
+                objid.push(hdl);
                 return {
                     path: accession_path,
                     name: name,
-                    hdl: hdl,
+                    objid: hdl,
                     type: 'id'
                 };
             });
@@ -257,6 +257,7 @@ router.post('/:_package/:na/:id', function (req, res) {
                 res.status(500);
                 res.end(JSON.stringify({status: 500, message: err}));
             } else {
+                console.info(result);
                 res.status(200);
                 res.end(JSON.stringify({status: 200, message: 'Stored ' + objid}));
             }

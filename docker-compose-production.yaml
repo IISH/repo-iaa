@@ -2,6 +2,6 @@ version: '2'
 services:
 
   mongodb:
-    image: mongo:4.0.12-xenial
+    image: mongo:4.4.6-bionic
     ports:
       - "27017:27017"

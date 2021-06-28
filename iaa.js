@@ -40,7 +40,7 @@ module.exports = function(app, openid, users) {
     Promise.all([keystore, discover_issuer])
         .then(([_keystore, myIssuer]) => {
             console.log('Found Issuer: ', myIssuer);
-            const oidc_client = new myIssuer.Client(openid.client_params, _keystore);
+            const oidc_client = new myIssuer.Client(openid.client_params);
             console.log('Created client: ', oidc_client);
             console.log('Keystore ', _keystore);
 
