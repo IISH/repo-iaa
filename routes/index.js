@@ -22,7 +22,7 @@ router.all('*/*', function (req, res, next) {
 
     res.type( 'application/json');
 
-    let folder = nconf.get('vfs') + '/' + (req.user.sub || 'dummy');
+    let folder = nconf.get('vfs') + '/' + req.user.sub;
     if (fs.existsSync(folder)) {
         let tree = cache[req.user.sub];
         let expire = new Date().valueOf();
