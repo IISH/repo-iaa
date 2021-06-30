@@ -46,7 +46,7 @@ module.exports = function (app, passport, web) {
                                     return (u.api === split[1]);
                                 });
                                 if (user) {
-                                    req.userinfo = {authorized: true, fullname: user.fullname, sub: user.oidc};
+                                    req.user = {authorized: true, fullname: user.fullname, sub: user.oidc};
                                     return next();
                                 } else {
                                     res.status(401);
