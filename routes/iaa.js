@@ -16,7 +16,7 @@ module.exports = function (app, passport, web) {
 
     app.all('*/*', function (req, res, next) {
         if (env === 'development' || req.hostname.indexOf('.') === -1) { // E.g. localhost
-            req.user = {fullname: 'n.a.'};
+            req.user = {authorized: true, fullname: 'local user'};
             next();
         } else {
             switch (req.path) {
@@ -35,21 +35,19 @@ module.exports = function (app, passport, web) {
                             res.redirect('/denied');
                         }
                     } else {
-                        const accesstoken = web.accesstoken;
-                        if (accesstoken === req.params.accesstoken) {
-                            req.user = {authorized: true, fullname: 'api user'};
-                            next();
-                        } else {
-                            let authorization = req.headers.authorization;
-                            if (authorization) {
-                                let split = authorization.split(' ', 2); // expect "Bearer [accesstoken]"
-                                if (accesstoken === split[1]) {
-                                    req.user = {authorized: true, fullname: 'api user'};
-                                    next()
-                                }
-                            } else {
-                                res.redirect('/login');
+                        let authorization = req.headers.authorization;
+                        if (authorization) {
+                            const users = nconf.get('users')
+                            let split = authorization.split(' ', 2); // expect "Bearer [accesstoken]"
+                            let user = users.find(function(u){
+                                return (u.api === userinfo.sub);
+                            });
+                            if (user && split.length === 2 && user.api === split[1]) {
+                                req.user = {authorized: true, fullname: user.fullname};
+                                next()
                             }
+                        } else {
+                            res.redirect('/login');
                         }
                     }
             }

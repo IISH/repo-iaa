@@ -13,10 +13,8 @@
 module.exports = function(app, openid, users) {
 
     const passport = require('passport');
-    const jose = require('node-jose'); // used to parse the keystore
     const Issuer = require('openid-client').Issuer;
     const Strategy = require('openid-client').Strategy;
-    const keystore = jose.JWK.asKeyStore(openid.keystore); // https://sometimes-react.medium.com/jwks-and-node-jose-9273f89f9a02
 
 // initialize passport here
     app.use(passport.initialize({}));
@@ -38,18 +36,19 @@ module.exports = function(app, openid, users) {
 // Create a client, and use it set up a Strategy for passport to use
 // since we need both the Issuer and the keystore, we'll use Promise.all()
     Promise.all([keystore, discover_issuer])
-        .then(([_keystore, myIssuer]) => {
+        .then(([myIssuer]) => {
             console.log('Found Issuer: ', myIssuer);
             const oidc_client = new myIssuer.Client(openid.client_params);
             console.log('Created client: ', oidc_client);
-            console.log('Keystore ', _keystore);
 
             // create a strategy along with the function that processes the results
             passport.use('oidc', new Strategy({client: oidc_client, params: openid.strategy}, (tokenset, userinfo, done) => {
                 // User.findOrCreate(userinfo.sub, userinfo, (err, user) => { done(err, user); });
                 // we'll just pass along the userinfo object as a simple 'user' object
-                let user = users[userinfo.sub];
-                userinfo.fullname = user || 'anonymous';
+                let user = users.find(function(u){
+                    return (u.oidc === userinfo.sub);
+                });
+                userinfo.fullname = user.fullname || 'anonymous';
                 userinfo.authorized = Boolean(user);
                 return done(null, userinfo);
             }));
