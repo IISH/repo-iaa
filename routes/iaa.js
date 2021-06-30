@@ -10,6 +10,8 @@
  * @param web configuration
  */
 
+const nconf = require('nconf');
+
 module.exports = function (app, passport, web) {
 
     var env = process.env.NODE_ENV;
@@ -39,13 +41,20 @@ module.exports = function (app, passport, web) {
                         if (authorization) {
                             const users = nconf.get('users')
                             let split = authorization.split(' ', 2); // expect "Bearer [accesstoken]"
-                            let user = users.find(function(u){
-                                return (u.api === userinfo.sub);
-                            });
-                            if (user && split.length === 2 && user.api === split[1]) {
-                                req.user = {authorized: true, fullname: user.fullname};
-                                next()
+                            if ( split.length === 2 && split[0].toLowerCase() === 'bearer') {
+                                let user = users.find(function (u) {
+                                    return (u.api === split[1]);
+                                });
+                                if (user) {
+                                    req.userinfo = {authorized: true, fullname: user.fullname, sub: user.oidc};
+                                    return next();
+                                } else {
+                                    res.status(401);
+                                    res.send();
+                                }
                             }
+                            res.status(400);
+                            res.send();
                         } else {
                             res.redirect('/login');
                         }

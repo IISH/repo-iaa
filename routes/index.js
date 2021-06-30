@@ -93,12 +93,12 @@ router.param('id', function (req, res, next, id) {
                         }
                         next();
                     } else {
-                        res.end(JSON.stringify({status: 403, message: 'Not authorized for ' + identifier + ' ' + err}));
+                        res.end(JSON.stringify({status: 403, message: 'Not authorized for ' + hdl}));
                         res.status(403).send();
                     }
 
                 } else {
-                    res.end(JSON.stringify({status: 404, message: 'handle not found ' + identifier + ' ' + err}));
+                    res.end(JSON.stringify({status: 404, message: 'handle not found ' + hdl}));
                     res.status(404).send();
                 }
             }
@@ -114,7 +114,7 @@ router.get('/', function (req, res) {
 
 // verkrijg een tree overzicht - folders en files - van de gebruiker.
 // bij de tree maken we een volledige diepte van folders - niet de files.
-router.get('/tree', function (req, res) {
+router.get('/metadata', function (req, res) {
     let tree = JSON.parse(JSON.stringify(cache[req.user.sub])); // clone
     delete tree.expire;
     delete tree.folder;
