@@ -18,7 +18,7 @@ module.exports = function (app, passport, web) {
 
     app.all('*/*', function (req, res, next) {
         if (env === 'development' || req.hostname.indexOf('.') === -1) { // E.g. localhost
-            req.user = {authorized: true, fullname: 'local user'};
+            req.user = {authorized: true, fullname: 'local user', sub: 'localhost'};
             next();
         } else {
             switch (req.path) {

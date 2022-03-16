@@ -114,7 +114,7 @@ router.get('/', function (req, res) {
 
 // verkrijg een tree overzicht - folders en files - van de gebruiker.
 // bij de tree maken we een volledige diepte van folders - niet de files.
-router.get('/metadata', function (req, res) {
+router.get('/metadata/:na', function (req, res) {
     let tree = JSON.parse(JSON.stringify(cache[req.user.sub])); // clone
     delete tree.expire;
     delete tree.folder;
@@ -244,13 +244,15 @@ function readVFS(filename) {
 }
 
 router.post('/:_package/:na/:id', function (req, res) {
-    let hdl = req.hdl;
-    let conditions = {objid: hdl};
-    let update = {};
     let _package = req._package;
-    update[_package] = req.body.files;
 
     if (['aip', 'dip'].includes(_package)) {
+        let hdl = req.hdl;
+        let conditions = {objid: hdl};
+        let update = {};
+        update['objid'] = hdl;
+        update[_package] = req.body.files;
+
         VFS.findOneAndUpdate(conditions, update, {upsert: true}, function (err, result) {
             if (err) {
                 console.error(err);
