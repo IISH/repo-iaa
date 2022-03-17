@@ -21,7 +21,7 @@ const dao = require('./dao');
 let filesSchema = new dao.Schema({
     path: String,
     vpath: String,
-    hdl: {type: String, index: {unique: true, dropDups: true}},
+    hdl: {type: String, index: {unique: false}},
     length: Number,
     content_type: String
 });

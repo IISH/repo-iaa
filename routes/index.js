@@ -261,7 +261,7 @@ router.post('/:_package/:na/:id', function (req, res) {
             } else {
                 console.info(result);
                 res.status(200);
-                res.end(JSON.stringify({status: 200, message: 'Stored ' + objid}));
+                res.end(JSON.stringify({status: 200, message: 'Stored ' + hdl}));
             }
         });
     } else {
