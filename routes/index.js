@@ -108,7 +108,7 @@ router.param('id', function (req, res, next, id) {
 
 // Human index page for login/logout
 router.get('/', function (req, res) {
-    res.type( 'application/json')
+    res.type( 'html')
     res.render('index', {title: 'a title', user: req.user.fullname});
 });
 
