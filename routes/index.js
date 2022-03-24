@@ -109,7 +109,7 @@ router.param('id', function (req, res, next, id) {
 // Human index page for login/logout
 router.get('/', function (req, res) {
     res.type( 'html')
-    res.render('index', {title: 'a title', user: req.user.fullname});
+    res.render('index', {title: 'rest api v0.0.1', user: req.user.fullname});
 });
 
 // verkrijg een tree overzicht - folders en files - van de gebruiker.
