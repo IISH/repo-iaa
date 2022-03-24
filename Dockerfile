@@ -1,5 +1,5 @@
 FROM node:alpine3.11
-LABEL Description="iaa server" Version="1.0.9"
+LABEL Description="iaa server" Version="1.0.11"
 
 COPY . /home/node
 
