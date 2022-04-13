@@ -4,6 +4,12 @@
     "endpoint": "http://localhost:3000",
     "session_secret": "session_secret"
   },
+  "datasource": {
+    "protocol": "mongodb",
+    "host": "mongodb",
+    "port": 27017,
+    "database": "vfs"
+  },
   "openid": {
     "client_params": {
       "client_id": "session_secret",

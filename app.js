@@ -44,6 +44,9 @@ require('./routes/iaa')(app, passport, nconf.get('web'));
 const indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
+const vfsRouter = require('./routes/vfs');
+app.use('/vfs', vfsRouter);
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     next(createError(404));

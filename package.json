@@ -13,7 +13,7 @@
     "express-session": "^1.17.2",
     "http-errors": "^1.8.0",
     "morgan": "^1.10.0",
-    "mongoose": "^5.12.15",
+    "mongoose": "^6.2.10",
     "connect-mongo": "^4.4.1",
     "nconf": "^0.11.3",
     "npm": "^7.19.0",
