@@ -1,0 +1,10 @@
+{
+  "pid": "10622/ARCH12345.267",
+  "objid": "10622/ARCH12345.267",
+  "length": 12345,
+  "path": "/path/a/v/c/d/e/f/ARCH12345.267.7z",
+  "vpath": "/vpath/A/B/C/D/E/F/DD/ARC12345.267.7z",
+  "contenttype": "application/7z",
+  "uploadtime": "2011-12-13T14:15:16Z",
+  "version": 123
+}

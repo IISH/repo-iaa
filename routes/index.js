@@ -48,4 +48,10 @@ router.all('*/*', function (req, res, next) {
     }
 });
 
+router.get('/ping', function (req, res) {
+    res.end(JSON.stringify({status: 200, message: 'pong'}));
+    res.status(200);
+    res.send();
+});
+
 module.exports = router;
