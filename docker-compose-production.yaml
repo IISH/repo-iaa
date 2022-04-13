@@ -9,7 +9,7 @@ services:
       - /data/backup/mongodb:/data/backup
 
   iaa:
-    image: registry.diginfra.net/lwo/iaa:v0.0.12
+    image: registry.diginfra.net/lwo/iaa:v0.0.12-1-g6ca4a11
     restart: always
     depends_on:
       - mongodb
