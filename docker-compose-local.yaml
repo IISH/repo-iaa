@@ -3,6 +3,8 @@ services:
 
   mongodb:
     image: mongo:4.4.6-bionic
+    ports:
+      - "27017:27017"
     volumes:
       - /data/mongodb/configdb:/data/configdb
       - /data/mongodb/db:/data/db
@@ -14,8 +16,4 @@ services:
     depends_on:
       - mongodb
     ports:
-      - "80:3000"
-    environment:
-      - CONFIG_FILE=/opt/config-production.json
-    volumes:
-      - /opt/config-production.json:/opt/config-production.json:ro
+      - "3000:3000"

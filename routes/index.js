@@ -7,51 +7,59 @@
  * @type {Router}
  */
 
-const nconf = require('nconf');
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 const router = express.Router({});
-const xml2js = require('xml2js');
+const VFSFile = require('../model/vfsFile');
+const VFSFolder = require('../model/vfsFolder');
 
-const cache = {};
-
-// interceptor
-router.all('*/*', function (req, res, next) {
-
-    res.type( 'application/json');
-
-    let folder = nconf.get('vfs') + '/' + req.user.sub;
-    if (fs.existsSync(folder)) {
-        let tree = cache[req.user.sub];
-        let expire = new Date().valueOf();
-        if (tree && tree['expire'] < expire) {
-            tree = null;
-        }
-        if (!tree) {
-            let objid = [];
-            tree = dirTree(folder + '/dip', '/dip', objid);
-            tree['expire'] = expire + 60000; // expire after one minute.
-            tree['folder'] = folder;
-            tree['objid'] = objid;
-            cache[req.user.sub] = tree;
-        }
-        next();
-    } else {
-        console.info("Not found " + folder);
-        if ( req.user.system === true) {
-            next();
-        } else {
-            res.end(JSON.stringify("User not recognized"));
-            res.status(401);
-        }
-    }
+router.param('na', function (req, res, next, na) {
+    req.na = na;
+    next();
 });
+router.param('vpath', function (req, res, next, vpath) {
+    req.vpath = vpath;
+    next();
+});
+
+router.get('/list/:na', function (req, res) {
+    let na = req.na;
+    list('/' + na, res);
+});
+
+router.get('/list/:na/:vpath(*)', function (req, res) {
+    let na = req.na;
+    let vpath = req.vpath;
+    list('/' + na + '/' + vpath, res);
+});
+
+function list(vpath = '.', res) {
+    VFSFolder.findOne({vpath: vpath}, '-_id -__v').populate({path: 'folders', select: '-_id -__v'}).populate({path: 'files', select: '-_id -__v'}).exec(function (err, doc) {
+            if (err) {
+                render(res, 500, err);
+            } else {
+                if (doc) {
+                    render(res, 200, doc);
+                } else {
+                    render(res, 404, 'Resource not found: ' + vpath);
+                }
+            }
+        }
+    );
+}
 
 router.get('/ping', function (req, res) {
-    res.end(JSON.stringify({status: 200, message: 'pong'}));
-    res.status(200);
-    res.send();
+    render(res, 200, 'pong');
 });
+
+function render(res, status = 200, message = 'OK', mimetype = 'application/json'){
+    res.type(mimetype);
+    res.status(status);
+    res.end(JSON.stringify({status: status, message: message}));
+    res.send();
+
+    if ( status !== 200) {
+        console.error(message);
+    }
+}
 
 module.exports = router;

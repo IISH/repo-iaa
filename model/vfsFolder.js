@@ -25,17 +25,19 @@ const dao = require('./dao');
 let folderSchema = new dao.Schema({
     vpath: {type: String, index: {unique: true, dropDups: true}},
     filename: String,
-    parent: {type: String, index: {unique: false, dropDups: false}},
+    // parent: {type: String, index: {unique: false, dropDups: false}},
     uploaddate: Date,
-    folders: [{type: dao.Schema.Types.ObjectId, ref: 'vfs_folder'}],
-    files: [{type: dao.Schema.Types.ObjectId, ref: 'vfs_file'}],
+    folders: [{type: dao.Schema.Types.ObjectId, ref: 'folder'}],
+    files: [{type: dao.Schema.Types.ObjectId, ref: 'file'}],
 });
 
 folderSchema.pre('findOneAndUpdate', function (next) {
-    let doc = this.getUpdate();
-    let i = doc.vpath.lastIndexOf('/');
-    doc.parent = (i > 0) ? doc['vpath'].substring(0, i) : '.';
     next();
 });
 
-module.exports = dao.model('VFSFolder', folderSchema, 'folder');
+folderSchema.virtual('parent').get(function(){
+    let i = this.vpath.lastIndexOf('/');
+    return (i > 0) ? this.vpath.substring(0, i) : '.';
+});
+
+module.exports = dao.model('folder', folderSchema, 'folder');

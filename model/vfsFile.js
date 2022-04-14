@@ -27,7 +27,7 @@ let fileSchema = new dao.Schema({
     vpath: {type: String, index: {unique: true, dropDups: true}},
     path: String,
     filename: String,
-    parent: {type: String, index: {unique: false, dropDups: false}},
+    // parent: {type: String, index: {unique: false, dropDups: false}},
     version: Number,
     objid: {type: String, index: {unique: false, dropDups: false}},
     pid: {type: String, index: {unique: true, dropDups: true}},
@@ -36,11 +36,9 @@ let fileSchema = new dao.Schema({
     uploaddate: Date
 });
 
-fileSchema.pre('findOneAndUpdate', function(next) {
-    let doc = this.getUpdate();
-    let i = doc.vpath.lastIndexOf('/');
-    doc.parent = (i > 0) ? doc['vpath'].substring(0, i) : '.';
-    next();
+fileSchema.virtual('parent').get(function(){
+    let i = this.vpath.lastIndexOf('/');
+    return (i > 0) ? this.vpath.substring(0, i) : '.';
 });
 
-module.exports = dao.model('VFSFile', fileSchema, 'file');
+module.exports = dao.model('file', fileSchema, 'file');
