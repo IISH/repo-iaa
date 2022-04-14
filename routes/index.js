@@ -35,7 +35,7 @@ router.get('/list/:na/:vpath(*)', function (req, res) {
 });
 
 function list(vpath = '.', res) {
-    VFSFolder.findOne({vpath: vpath}, '-_id -__v').populate({path: 'folders', select: '-_id -__v'}).populate({path: 'files', select: '-_id -__v'}).exec(function (err, doc) {
+    VFSFolder.findOne({vpath: vpath}, '-_id -__v').populate({path: 'folders', select: '-_id -__v -folders -files'}).populate({path: 'files', select: '-_id -__v'}).exec(function (err, doc) {
             if (err) {
                 render(res, 500, err);
             } else {
