@@ -25,7 +25,6 @@ const dao = require('./dao');
 let folderSchema = new dao.Schema({
     vpath: {type: String, index: {unique: true, dropDups: true}},
     filename: String,
-    // parent: {type: String, index: {unique: false, dropDups: false}},
     uploaddate: Date,
     folders: [{type: dao.Schema.Types.ObjectId, ref: 'folder'}],
     files: [{type: dao.Schema.Types.ObjectId, ref: 'file'}],

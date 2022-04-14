@@ -7,7 +7,6 @@
  * @type {Router}
  */
 
-const nconf = require('nconf');
 const express = require('express');
 const router = express.Router({});
 const VFSFile = require('../model/vfsFile');
@@ -63,7 +62,7 @@ function valid(update) {
         update['contenttype'] = 'application/octet-stream';
     }
 
-    const required = ['pid', 'objid', 'length', 'path', 'vpath', 'uploaddate', 'contenttype', 'version'];
+    const required = ['gv', 'fv', 'pid', 'objid', 'length', 'path', 'vpath', 'uploaddate', 'contenttype', 'version'];
     return required.filter(function(item) {
         return update[item] === undefined;
     })
