@@ -62,7 +62,7 @@ function valid(update) {
         update['contenttype'] = 'application/octet-stream';
     }
 
-    const required = ['gv', 'fv', 'pid', 'objid', 'length', 'path', 'vpath', 'uploaddate', 'contenttype', 'version'];
+    const required = ['gv', 'fv', 'pid', 'objid', 'length', 'path', 'vpath', 'uploaddate', 'contenttype'];
     return required.filter(function(item) {
         return update[item] === undefined;
     })
