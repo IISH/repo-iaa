@@ -36,7 +36,16 @@ let fileSchema = new dao.Schema({
     uploaddate: Date
 });
 
-fileSchema.virtual('parent').get(function(){
+fileSchema.pre('findOneAndUpdate', function (next) {
+    let doc = this.getUpdate();
+    if (doc.filename === undefined) {
+        let i = doc.vpath.lastIndexOf('/') + 1;
+        doc.filename = doc.vpath.substring(i);
+    }
+    next();
+});
+
+fileSchema.virtual('parent').get(function () {
     let i = this.vpath.lastIndexOf('/');
     return (i > 0) ? this.vpath.substring(0, i) : '.';
 });
