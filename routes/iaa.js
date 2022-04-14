@@ -11,6 +11,7 @@
  */
 
 const nconf = require('nconf');
+const render = require('../modules/render');
 
 module.exports = function (app, passport, web) {
 
@@ -18,7 +19,7 @@ module.exports = function (app, passport, web) {
 
     app.all('*/*', function (req, res, next) {
         if (env === 'development' || req.hostname.indexOf('.') === -1) { // E.g. localhost
-            req.user = {authorized: true, fullname: 'local user', sub: 'localhost', system: true};
+            req.user = {authorized: true, fullname: 'local user', sub: 'localhost'};
             next();
         } else {
             switch (req.path) {
@@ -92,6 +93,10 @@ module.exports = function (app, passport, web) {
         req.logout();
         res.status = 403;
         res.render('logout', {title: 'Access denied. Insufficient permissions', theme: web.theme, sub: sub});
+    });
+
+    app.get('/ping', function (req, res) {
+        render(res, 200, 'pong');
     });
 
 };

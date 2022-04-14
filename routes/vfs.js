@@ -12,6 +12,8 @@ const express = require('express');
 const router = express.Router({});
 const VFSFile = require('../model/vfsFile');
 const VFSFolder = require('../model/vfsFolder');
+const render = require('../modules/render');
+
 const OPTS = {new: true, upsert: true};
 
 router.param('na', function (req, res, next, na) {
@@ -89,17 +91,6 @@ function add(id, vpath, uploaddate, isFile = false) {
             }
         }
     });
-}
-
-function render(res, status = 200, message = 'OK', mimetype = 'application/json'){
-    res.type(mimetype);
-    res.status(status);
-    res.end(JSON.stringify({status: status, message: message}));
-    res.send();
-
-    if ( status !== 200) {
-        console.error(message);
-    }
 }
 
 module.exports = router;

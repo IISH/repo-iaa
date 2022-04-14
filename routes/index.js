@@ -11,6 +11,8 @@ const express = require('express');
 const router = express.Router({});
 const VFSFile = require('../model/vfsFile');
 const VFSFolder = require('../model/vfsFolder');
+const render = require('../modules/render');
+
 
 router.param('na', function (req, res, next, na) {
     req.na = na;
@@ -45,21 +47,6 @@ function list(vpath = '.', res) {
             }
         }
     );
-}
-
-router.get('/ping', function (req, res) {
-    render(res, 200, 'pong');
-});
-
-function render(res, status = 200, message = 'OK', mimetype = 'application/json'){
-    res.type(mimetype);
-    res.status(status);
-    res.end(JSON.stringify({status: status, message: message}));
-    res.send();
-
-    if ( status !== 200) {
-        console.error(message);
-    }
 }
 
 module.exports = router;
