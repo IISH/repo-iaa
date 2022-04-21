@@ -1,8 +1,8 @@
 /**
- * index
+ * /list
  *
  * Description
- * Serve the resources: bytestream and metadata
+ * Show the resource metadata
  *
  * @type {Router}
  */
@@ -23,14 +23,21 @@ router.param('vpath', function (req, res, next, vpath) {
     next();
 });
 
-router.get('/list/:na', function (req, res) {
+// everything
+router.get('/', function (req, res) {
+    list('/', res);
+});
+
+// a repo
+router.get('/:na', function (req, res) {
     let na = req.na;
     list('/' + na, res);
 });
 
-router.get('/list/:na/:vpath(*)', function (req, res) {
+// a path in a repo
+router.get('/:na/:vpath(*)', function (req, res) {
     let na = req.na;
-    let vpath = req.vpath;
+    let vpath = (req.vpath.slice(-1) === '/') ? req.vpath.slice(0, -1) : req.vpath;
     list('/' + na + '/' + vpath, res);
 });
 

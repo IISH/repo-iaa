@@ -13,7 +13,7 @@ ENV NODE_ENV=production \
     CONFIG_FILE="./config.json"
 
 HEALTHCHECK --interval=1m --timeout=3s \
-    CMD /usr/bin/wget --header='Content-Type: application/json' --header 'Connection: close' 'http://localhost:3000/ping' || exit 1
+    CMD /usr/bin/wget --spider --header='Content-Type: application/json' --header 'Connection: close' 'http://localhost:3000/ping' || exit 1
 
 USER node
 

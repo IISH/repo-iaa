@@ -24,6 +24,7 @@ const dao = require('./dao');
 
 let folderSchema = new dao.Schema({
     vpath: {type: String, index: {unique: true, dropDups: true}},
+    path: String,
     filename: String,
     uploaddate: Date,
     folders: [{type: dao.Schema.Types.ObjectId, ref: 'folder'}],
@@ -36,7 +37,7 @@ folderSchema.pre('findOneAndUpdate', function (next) {
 
 folderSchema.virtual('parent').get(function(){
     let i = this.vpath.lastIndexOf('/');
-    return (i > 0) ? this.vpath.substring(0, i) : '.';
+    return (i > 0) ? this.vpath.substring(0, i) : '/';
 });
 
 module.exports = dao.model('folder', folderSchema, 'folder');

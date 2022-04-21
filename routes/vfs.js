@@ -83,8 +83,8 @@ function add(id, vpath, uploaddate, isFile = false) {
         if (err) {
             console.error(err);
         } else {
-            if (doc['parent'] === '.') {
-                // we arrived at the root
+            if (vpath === '/') {
+                // we arrived at the root, so no need to nestle further.
             } else {
                 add(doc['_id'], doc['parent'], doc['uploaddate'], false);
             }

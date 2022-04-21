@@ -96,7 +96,8 @@ module.exports = function (app, passport, web) {
     });
 
     app.get('/ping', function (req, res) {
-        render(res, 200, 'pong');
+        let message = ( req.method === 'HEAD') ? null : 'pong';
+        render(res, 200, message);
     });
 
 };

@@ -10,7 +10,6 @@ const nconf = require('nconf');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const createError = require('http-errors');
-const dao = require('./model/dao');
 const express = require('express');
 const logger = require('morgan');
 const path = require('path');
@@ -41,8 +40,11 @@ app.use(session({
 const passport = require('./iaa')(app, nconf.get('openid'), nconf.get('users'));
 require('./routes/iaa')(app, passport, nconf.get('web'));
 
-const indexRouter = require('./routes/index');
-app.use('/', indexRouter);
+const listRouter = require('./routes/list');
+app.use('/list', listRouter);
+
+const fileRouter = require('./routes/file');
+app.use('/file', fileRouter);
 
 const vfsRouter = require('./routes/vfs');
 app.use('/vfs', vfsRouter);
