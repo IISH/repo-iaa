@@ -6,5 +6,6 @@
   "vpath": "/vpath/A/B/C/D/E/F/G/ARC12345.67.7z",
   "contenttype": "application/7z",
   "uploadtime": "2011-12-13T14:15:16Z",
-  "version": 123
+  "fv": 123,
+  "gv": 123
 }

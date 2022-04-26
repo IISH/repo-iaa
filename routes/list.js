@@ -42,14 +42,30 @@ router.get('/:na/:vpath(*)', function (req, res) {
 });
 
 function list(vpath = '.', res) {
-    VFSFolder.findOne({vpath: vpath}, '-_id -__v').populate({path: 'folders', select: '-_id -__v -folders -files'}).populate({path: 'files', select: '-_id -__v'}).exec(function (err, doc) {
+    let filter = {vpath: vpath};
+    VFSFolder.findOne(filter, '-_id -__v').populate({
+        path: 'folders',
+        select: '-_id -__v -folders -files'
+    }).populate({path: 'files', select: '-_id -__v'}).exec(function (err, folder) {
             if (err) {
                 render(res, 500, err);
             } else {
-                if (doc) {
-                    render(res, 200, doc);
-                } else {
-                    render(res, 404, 'Resource not found: ' + vpath);
+                if (folder) {
+                    render(res, 200, folder);
+                } else { // Did they want a file?
+                    let filter = {$or:[{vpath: vpath},{pid:vpath}]};
+                    VFSFile.findOne(filter, '-_id -__v').exec(function (err, file) {
+                            if (err) {
+                                render(res, 500, err);
+                            } else {
+                                if (file) {
+                                    render(res, 200, file);
+                                } else { // Did they want a file?
+                                    render(res, 404, 'Resource not found: ' + vpath);
+                                }
+                            }
+                        }
+                    )
                 }
             }
         }

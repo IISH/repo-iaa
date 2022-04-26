@@ -8,7 +8,7 @@
  * vfs:
  *   vpath: virtual path
  *   path: absolute path on a device
- *   filename: name without the basepath: can be a file or foldername
+ *   name: name without the basepath: can be a file or foldername
  *   parent: virtual base pathname
  *   depth: the path level. Root be level 0
  *   version: from archivesspace - a unique number
@@ -22,22 +22,28 @@
 
 const dao = require('./dao');
 
-let folderSchema = new dao.Schema({
+const folderSchema = new dao.Schema({
     vpath: {type: String, index: {unique: true, dropDups: true}},
     path: String,
-    filename: String,
+    name: String,
     uploaddate: Date,
     folders: [{type: dao.Schema.Types.ObjectId, ref: 'folder'}],
     files: [{type: dao.Schema.Types.ObjectId, ref: 'file'}],
 });
 
 folderSchema.pre('findOneAndUpdate', function (next) {
+    let doc = this.getUpdate();
+    if (doc.name === undefined) {
+        let filename = doc.vpath.split('/').filter( function(item) {return item.length > 0} ).pop();
+        doc.name = filename || '.';
+    }
     next();
 });
 
-folderSchema.virtual('parent').get(function(){
-    let i = this.vpath.lastIndexOf('/');
-    return (i > 0) ? this.vpath.substring(0, i) : '/';
+folderSchema.virtual('parent').get(function () {
+    let parts = this.vpath.split('/').filter( function(item) {return item.length > 0} );
+    parts.pop();
+    return (parts.length === 0) ? '/' : '/' + parts.join('/');
 });
 
 module.exports = dao.model('folder', folderSchema, 'folder');

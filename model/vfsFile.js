@@ -1,5 +1,4 @@
 'use strict';
-const uuidv4 = require('uuid/v4');
 
 
 /**
@@ -9,7 +8,7 @@ const uuidv4 = require('uuid/v4');
  * vfs:
  *   vpath: virtual absolute path
  *   path: absolute path on a device
- *   filename: name without the basepath: can be a file or foldername
+ *   name: name without the basepath: can be a file or foldername
  *   parent: virtual base pathname
  *   depth: the path level. Root be level 0
  *   version: from archivesspace - a unique number
@@ -23,31 +22,32 @@ const uuidv4 = require('uuid/v4');
 
 const dao = require('./dao');
 
-let fileSchema = new dao.Schema({
+const fileSchema = new dao.Schema({
     vpath: {type: String, index: {unique: true, dropDups: true}},
     path: String,
-    filename: String,
+    name: String,
     gv: Number,
     fv: Number,
     objid: {type: String, index: {unique: false, dropDups: false}},
     pid: {type: String, index: {unique: true, dropDups: true}},
     length: Number,
-    contenttype: String,
+    contenttype: {type: String, default: 'application/octet-stream'},
     uploaddate: Date
 });
 
 fileSchema.pre('findOneAndUpdate', function (next) {
     let doc = this.getUpdate();
-    if (doc.filename === undefined) {
-        let i = doc.vpath.lastIndexOf('/') + 1;
-        doc.filename = doc.vpath.substring(i);
+    if (doc.name === undefined) {
+        let filename = doc.vpath.split('/').filter( function(item) {return item.length > 0} ).pop();
+        doc.name = filename || '/';
     }
     next();
 });
 
 fileSchema.virtual('parent').get(function () {
-    let i = this.vpath.lastIndexOf('/');
-    return (i > 0) ? this.vpath.substring(0, i) : '.';
+    let parts = this.vpath.split('/').filter( function(item) {return item.length > 0} );
+    parts.pop();
+    return (parts) ? '/' + parts.join('/') : '.';
 });
 
 module.exports = dao.model('file', fileSchema, 'file');

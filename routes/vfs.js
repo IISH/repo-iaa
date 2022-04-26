@@ -12,7 +12,7 @@ const router = express.Router({});
 const VFSFile = require('../model/vfsFile');
 const VFSFolder = require('../model/vfsFolder');
 const render = require('../modules/render');
-
+const REQUIRED = ['gv', 'fv', 'pid', 'objid', 'length', 'path', 'vpath'];
 const OPTS = {new: true, upsert: true};
 
 router.param('na', function (req, res, next, na) {
@@ -58,12 +58,8 @@ function valid(update) {
     if ( update['uploaddate'] === undefined ) {
         update['uploaddate'] = new Date();
     }
-    if ( update['contenttype'] === undefined ) {
-        update['contenttype'] = 'application/octet-stream';
-    }
 
-    const required = ['gv', 'fv', 'pid', 'objid', 'length', 'path', 'vpath', 'uploaddate', 'contenttype'];
-    return required.filter(function(item) {
+    return REQUIRED.filter(function(item) {
         return update[item] === undefined;
     })
 }

@@ -43,7 +43,7 @@ router.get('/:na/:id(*)', function (req, res) {
                         headers: {
                             'Content-Length': doc.length,
                             'Content-Type': doc.contenttype,
-                            'Content-Disposition': 'attachment; filename="' + doc.filename + '"'
+                            'Content-Disposition': 'attachment; filename="' + doc.name + '"'
                         }
                     }
 
