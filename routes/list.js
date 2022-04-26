@@ -53,7 +53,8 @@ function list(vpath = '.', res) {
                 if (folder) {
                     render(res, 200, folder);
                 } else { // Did they want a file?
-                    let filter = {$or:[{vpath: vpath},{pid:vpath}]};
+                    let pid = vpath.slice(1);
+                    let filter = {$or:[{vpath: vpath},{pid:pid}]};
                     VFSFile.findOne(filter, '-_id -__v').exec(function (err, file) {
                             if (err) {
                                 render(res, 500, err);
