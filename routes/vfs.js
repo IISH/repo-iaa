@@ -33,7 +33,7 @@ router.post('/:na/:id', function (req, res) {
     if (pid === update.pid) {
         let required = valid(update);
         if (required.length === 0) {
-            update['vpath'] = '/' + na + '/' + update['vpath'].split('/').filter(function(item){
+            update['vpath'] = '/' + update['vpath'].split('/').filter(function(item){
                 return (item.length);
             }).join('/');
             VFSFile.findOneAndUpdate({pid: pid}, update, OPTS, function (err, doc) {

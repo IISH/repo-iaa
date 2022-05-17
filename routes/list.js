@@ -29,16 +29,21 @@ router.get('/', function (req, res) {
 });
 
 // a repo
-router.get('/:na', function (req, res) {
-    let na = req.na;
-    list('/' + na, res);
-});
+// router.get('/:na', function (req, res) {
+//     let na = req.na;
+//     list('/' + na, res);
+// });
 
 // a path in a repo
-router.get('/:na/:vpath(*)', function (req, res) {
-    let na = req.na;
+// router.get('/:na/:vpath(*)', function (req, res) {
+//     let na = req.na;
+//     let vpath = (req.vpath.slice(-1) === '/') ? req.vpath.slice(0, -1) : req.vpath;
+//     list('/' + vpath, res);
+// });
+//
+router.get('/:vpath(*)', function (req, res) {
     let vpath = (req.vpath.slice(-1) === '/') ? req.vpath.slice(0, -1) : req.vpath;
-    list('/' + na + '/' + vpath, res);
+    list('/' + vpath, res);
 });
 
 function list(vpath = '.', res) {
